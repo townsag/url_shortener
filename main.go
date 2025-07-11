@@ -29,7 +29,7 @@ func newServer() http.Handler {
 func main() {
 	srv := newServer()
 	httpServer := &http.Server{
-		Addr: net.JoinHostPort("localhost", "8000"),
+		Addr: net.JoinHostPort("0.0.0.0", "8000"),
 		Handler: srv,
 	}
 
