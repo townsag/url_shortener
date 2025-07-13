@@ -28,7 +28,7 @@ func LoggingMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
 		boundLogger := logger.With(
 			"method", r.Method,
 			"path", r.URL.Path,
-			requestIdHeader, r.Header.Get(requestIdHeader),
+			requestIdHeader, IdFromRequest(r),
 		)
 		// add the logger to the request context
 		ctx := context.WithValue(r.Context(), LoggerKey, boundLogger)

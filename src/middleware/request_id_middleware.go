@@ -24,3 +24,12 @@ func RequestIdMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+/*
+Still not sure if this is the right approach, I like the idea of encapsulating the
+logic of fetching the id inside of the middleware package but this might be unecissary?
+*/
+func IdFromRequest(r *http.Request) (string) {
+	requestId := r.Header.Get(requestIdHeader)
+	return requestId
+}
