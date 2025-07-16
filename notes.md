@@ -14,6 +14,24 @@ todo:
 - when making the dockerfile for url shortener, do I have to copy in the url_shortener
   directory name for it to build properly?
 
+- contexts:
+    - a way to pass request scoped state between functions
 
-- dummy schema
-(short_url) -> (long_url, created_epoch, count)
+- Next steps:
+    - understand what context is?
+    - add the database client to the appication, pass it to the handlers
+    - add two routes:
+        - GET /{short_url_id}
+        - POST /register
+    - add database support to those two routes
+    - add health check
+    - add caching
+    - add load balancing
+    - add horizontal scaling
+    - add metrics
+    - add log agregation
+    - add tracing with opentelemetry
+    - add admin dashboard
+        - analytics?
+    - add frontend
+    - add auth?
