@@ -1,14 +1,18 @@
 package main
 
 import (
-	"fmt"
 	"net"
 	"net/http"
+	"log"
+	"context"
+
+	"github.com/jackc/pgx/v5"
+
 	"townsag/url_shortener/src/middleware"
 	"townsag/url_shortener/src/handlers"
 )
 
-func newServer() http.Handler {
+func newServer(_ *pgx.Conn) http.Handler {
 	// TODO: add dependencies here like a database connection pool
 	mux := http.NewServeMux()
 	// TODO: pass the database connection pool into add routes
@@ -27,12 +31,20 @@ func newServer() http.Handler {
 }
 
 func main() {
-	srv := newServer()
+	ctx := context.Background()
+	var postgresConfig *dbConfig = getConfiguration()
+	conn, err := createDBConnection(ctx, postgresConfig)
+	if err != nil {
+		log.Fatalf("faled to create a database connection: %s", err)
+	}
+	defer conn.Close(context.Background())
+
+	srv := newServer(conn)
 	httpServer := &http.Server{
 		Addr: net.JoinHostPort("0.0.0.0", "8000"),
 		Handler: srv,
 	}
 
-	fmt.Println("listening on port 8000")
+	log.Println("listening on port 8000")
 	httpServer.ListenAndServe()
 }
