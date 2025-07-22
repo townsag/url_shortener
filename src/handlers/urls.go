@@ -26,7 +26,7 @@ type createMappingResponseBody struct {
 }
 
 
-func createMappingHanlerFactory(conn *pgx.Conn) http.HandlerFunc {
+func createMappingHandlerFactory(conn *pgx.Conn) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// parse the http post request body
 		var body createMappingRequestBody
@@ -122,5 +122,5 @@ func AddRoutes(mux *http.ServeMux, conn *pgx.Conn) {
 	// the function
 	mux.HandleFunc("/hello", hello)
 	mux.HandleFunc("GET /{shortUrlId}", redirectToLongUrlHandlerFactory(conn))
-	mux.HandleFunc("POST /mapping", createMappingHanlerFactory(conn))
+	mux.HandleFunc("POST /mapping", createMappingHandlerFactory(conn))
 }
