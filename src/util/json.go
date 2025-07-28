@@ -29,7 +29,7 @@ func (m *MalformedRequest) Error() string {
 
 func DecodeJSONBody(w http.ResponseWriter, r *http.Request, destination interface{}) error {
 	// verify that the request does include json body
-	if r.Header.Get("Content-Type") != "applicaton/json" {
+	if r.Header.Get("Content-Type") != "application/json" {
 		// return a malformed request object
 		return &MalformedRequest{
 			Msg: "Content-Type header must be application/json",

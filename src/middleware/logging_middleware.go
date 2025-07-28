@@ -8,7 +8,7 @@ import (
 )
 
 type contextKey string
-const LoggerKey contextKey = contextKey("logger")
+const loggerKey contextKey = contextKey("logger")
 
 func BuildLogger() *slog.Logger {
 	logger := slog.New(slog.NewJSONHandler(
@@ -31,11 +31,19 @@ func LoggingMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
 			requestIdHeader, IdFromRequest(r),
 		)
 		// add the logger to the request context
-		ctx := context.WithValue(r.Context(), LoggerKey, boundLogger)
+		ctx := context.WithValue(r.Context(), loggerKey, boundLogger)
 		r = r.WithContext(ctx)
 		// log some metadata about the request
 		boundLogger.Debug("recieved request")
 		// add call the next handler
 		next.ServeHTTP(w, r)
 	})
+}
+
+func GetLoggerFromContext(ctx context.Context) *slog.Logger {
+	logger, ok := ctx.Value(loggerKey).(*slog.Logger)
+	if !ok {
+		return BuildLogger()
+	}
+	return logger
 }
