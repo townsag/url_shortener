@@ -1,6 +1,6 @@
 -- name: InsertMapping :one
-INSERT INTO url_mapping (id, long_url, created_at)
-VALUES ($1, $2, $3)
+INSERT INTO url_mapping (id, long_url)
+VALUES ($1, $2)
 ON CONFLICT (id) DO NOTHING
 RETURNING id;
 

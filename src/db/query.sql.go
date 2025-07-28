@@ -7,25 +7,22 @@ package db
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const insertMapping = `-- name: InsertMapping :one
-INSERT INTO url_mapping (id, long_url, created_at)
-VALUES ($1, $2, $3)
+INSERT INTO url_mapping (id, long_url)
+VALUES ($1, $2)
 ON CONFLICT (id) DO NOTHING
 RETURNING id
 `
 
 type InsertMappingParams struct {
-	ID        string
-	LongUrl   string
-	CreatedAt pgtype.Timestamp
+	ID      string
+	LongUrl string
 }
 
 func (q *Queries) InsertMapping(ctx context.Context, arg InsertMappingParams) (string, error) {
-	row := q.db.QueryRow(ctx, insertMapping, arg.ID, arg.LongUrl, arg.CreatedAt)
+	row := q.db.QueryRow(ctx, insertMapping, arg.ID, arg.LongUrl)
 	var id string
 	err := row.Scan(&id)
 	return id, err

@@ -12,12 +12,11 @@ import (
 	"townsag/url_shortener/src/handlers"
 )
 
-func newServer(_ *pgx.Conn) http.Handler {
-	// TODO: add dependencies here like a database connection pool
+func newServer(conn *pgx.Conn) http.Handler {
 	mux := http.NewServeMux()
-	// TODO: pass the database connection pool into add routes
 	handlers.AddRoutes(
 		mux,
+		conn,
 	)
 
 	root_logger := middleware.BuildLogger()
