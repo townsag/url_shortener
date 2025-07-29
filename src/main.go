@@ -34,7 +34,7 @@ func main() {
 	var postgresConfig *dbConfig = getConfiguration()
 	conn, err := createDBConnection(ctx, postgresConfig)
 	if err != nil {
-		log.Fatalf("faled to create a database connection: %s", err)
+		log.Fatalf("failed to create a database connection: %s", err)
 	}
 	defer conn.Close(context.Background())
 
