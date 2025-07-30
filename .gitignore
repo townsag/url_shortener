@@ -1,3 +1,4 @@
 src/url_shortener
 syntax.go
 coverage.out
+*.env

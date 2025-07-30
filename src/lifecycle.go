@@ -23,7 +23,7 @@ type dbConfig struct {
 func getConfiguration() *dbConfig {
 	var portEnv string = util.GetEnvWithDefault("POSTGRES_PORT", "5432")
 	// declaring port inside of the if condition expression would create a 
-	// new verison of port scoped to the if statement. This version of port
+	// new version of port scoped to the if statement. This version of port
 	// would shadow but not replace the function scoped version of port
 	port, err := strconv.Atoi(portEnv)
 	if err != nil {
@@ -54,7 +54,7 @@ func createDBConnection(ctx context.Context, config *dbConfig) (*pgx.Conn, error
 
 	if err := conn.Ping(ctx); err != nil {
 		conn.Close(ctx)
-		return nil, fmt.Errorf("faild to ping database after creating connection: %w", err)
+		return nil, fmt.Errorf("failed to ping database after creating connection: %w", err)
 	}
 
 	return conn, nil

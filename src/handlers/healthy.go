@@ -13,7 +13,8 @@ type pinger interface {
 
 func healthyHandlerFactory(conn pinger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, _ := context.WithTimeout(r.Context(), time.Millisecond*500)
+		ctx, cancel := context.WithTimeout(r.Context(), time.Millisecond*500)
+		defer cancel()
 		if err := conn.Ping(ctx); err != nil {
 			http.Error(
 				w, 

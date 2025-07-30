@@ -29,6 +29,8 @@ todo:
         - POST /register
     - [x] add database support to those two routes
     - [x] add health check
+    - [x] add docker compose configuration
+    - [ ] add frontend
     - [ ] add caching
     - [ ] add horizontal scaling
     - [ ] add load balancing
@@ -37,7 +39,6 @@ todo:
     - [ ] add tracing with opentelemetry
     - [ ] add admin dashboard
         - analytics?
-    - [ ] add frontend
     - [ ] add auth?
     - testing types
         - unit + integration tests with code coverage
