@@ -5,6 +5,12 @@
     ```
 
 ## Running the docker compose file:
+- docker compose can be used to run the url_shortener application with its dependencies
+    ```bash
+    cd ..
+    docker compose -f docker-compose.yml build
+    docker compose -f docker-compose.yml up
+    ```
 
 ## Running the Unit + Integration tests
 - with coverage
