@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/redis/go-redis/v9"
 
 	"townsag/url_shortener/src/util"
 )
@@ -58,4 +59,28 @@ func createDBConnection(ctx context.Context, config *dbConfig) (*pgx.Conn, error
 	}
 
 	return conn, nil
+}
+
+type redisConfig struct {
+	address string
+}
+
+func getRedisConfiguration() *redisConfig {
+	return &redisConfig{
+		address: fmt.Sprintf(
+			"%s:%s",
+			util.GetEnvWithDefault("REDIS_HOST", "localhost"),
+			util.GetEnvWithDefault("REDIS_PORT", "6379"),
+		),
+	}
+}
+
+func createRedisConnection(ctx context.Context, config *redisConfig) (*redis.Client, error) {
+	rdb := redis.NewClient(&redis.Options{
+		Addr: config.address,
+	})
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		return nil, fmt.Errorf("unable to reach redis server: %w", err)
+	}
+	return rdb, nil
 }
