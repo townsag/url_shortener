@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
         "healthcheck",
+        "tcredis",
         "testcontainer",
         "testcontainers"
     ]
