@@ -16,8 +16,13 @@ func TestHealthySuccess(t *testing.T) {
 		t.Fatalf("failed to create a connection to postgres: %v", err)
 	}
 
+	dbr, err := setupRedisContainer()
+	if err != nil {
+		t.Fatalf("failed to create a connection to redis: %v", err)
+	}
+
 	testMux := http.NewServeMux()
-	testMux.HandleFunc("GET /healthy", healthyHandlerFactory(conn))
+	testMux.HandleFunc("GET /healthy", healthyHandlerFactory(conn, dbr))
 
 	req, err := http.NewRequest("GET", "/healthy", nil)
 	if err != nil {
@@ -36,9 +41,14 @@ func (*failingPinger) Ping(ctx context.Context) error {
 	return fmt.Errorf("failed to connect to database")
 }
 
-func TestHealthyFail(t *testing.T) {
+func TestHealthyFailPg(t *testing.T) {
+	dbr, err := setupRedisContainer()
+	if err != nil {
+		t.Fatalf("failed to create a connection to redis: %v", err)
+	}
+
 	testMux := http.NewServeMux()
-	testMux.HandleFunc("GET /healthy", healthyHandlerFactory(&failingPinger{}))
+	testMux.HandleFunc("GET /healthy", healthyHandlerFactory(&failingPinger{}, dbr))
 
 	req, err := http.NewRequest("GET", "/healthy", nil)
 	if err != nil {

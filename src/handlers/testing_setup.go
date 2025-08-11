@@ -6,8 +6,10 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	tcredis "github.com/testcontainers/testcontainers-go/modules/redis"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -15,8 +17,12 @@ import (
 var (
 	conn *pgx.Conn
 	pgContainer *postgres.PostgresContainer
-	setupOnce sync.Once
-	cleanupOnce sync.Once
+	setupOncePG sync.Once
+	cleanupOncePG sync.Once
+	dbr *redis.Client
+	redisContainer *tcredis.RedisContainer
+	setupOnceRedis sync.Once
+	cleanupOnceRedis sync.Once
 )
 
 /*
@@ -32,7 +38,7 @@ TODO:
 
 func setupPostgresContainer() (*pgx.Conn, error) {
 	var err error = nil
-	setupOnce.Do(
+	setupOncePG.Do(
 		func() {
 			ctx := context.Background()
 			fmt.Println("creating postgres container")
@@ -77,7 +83,7 @@ func setupPostgresContainer() (*pgx.Conn, error) {
 
 func cleanupPostgresContainer() error {
 	var err error = nil
-	cleanupOnce.Do(
+	cleanupOncePG.Do(
 		func() {
 			ctx := context.Background()
 			if conn != nil{
@@ -100,3 +106,64 @@ func cleanupPostgresContainer() error {
 // 	ctx := context.Background()
 // 	return pgContainer.Restore(ctx)
 // }
+
+func setupRedisContainer() (*redis.Client, error) {
+	var err error = nil
+	setupOnceRedis.Do(
+		func() {
+			// create a redis container and make a connection to it
+			ctx := context.Background()
+			fmt.Println("creating redis container")
+			redisContainer, err = tcredis.Run(
+				ctx,
+				"redis:latest",
+				tcredis.WithConfigFile(filepath.Join("..", "..", "redis", "redis.conf")),
+			)
+			if err != nil {
+				err = fmt.Errorf("failed to start redis test container: %w", err)
+				return
+			}
+			// create the redis client
+			var uri string
+			uri, err = redisContainer.ConnectionString(ctx)
+			if err != nil {
+				err = fmt.Errorf("failed to get a connection string from the redis container: %w", err)
+				return
+			}
+			var opt *redis.Options
+			opt, err = redis.ParseURL(uri)
+			if err != nil {
+				err = fmt.Errorf("failed to create client options from connection string: %w", err)
+			}
+			dbr = redis.NewClient(opt)
+			// TODO: ping the client here
+			// return the redis client and any errors that are encountered
+		},
+	)
+	return dbr, err
+}
+
+func cleanupRedisContainer() error {
+	var err error = nil
+	cleanupOnceRedis.Do(
+		func() {
+			if dbr != nil {
+				dbr.Close()
+			}
+			if redisContainer != nil {
+				fmt.Println("cleaning up redis container")
+				err = testcontainers.TerminateContainer(redisContainer)
+				if err != nil {
+					err = fmt.Errorf("unable to clean up redis container: %w", err)
+				}
+			}
+		},
+	)
+	return err 
+}
+
+/*
+CHECKPOINT:
+  - you were in the middle of adding test automation for the redis client in the healthy route and the redirect to
+	long url route
+*/

@@ -9,6 +9,7 @@ import (
 	"regexp"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/redis/go-redis/v9"
 
 	"townsag/url_shortener/src/db"
 	"townsag/url_shortener/src/middleware"
@@ -111,29 +112,39 @@ func isValidShortUrlId(id string) bool {
 	return r.MatchString(id)
 }
 
-func redirectToLongUrlHandlerFactory(conn *pgx.Conn) http.HandlerFunc {
+func redirectToLongUrlHandlerFactory(conn *pgx.Conn, rdb *redis.Client) http.HandlerFunc {
 	return func (w http.ResponseWriter, r *http.Request) {
 		var logger *slog.Logger = middleware.GetLoggerFromContext(r.Context())
 		// parse the short url from the path
-		shortUrl := r.PathValue("shortUrlId")
+		shortUrlId := r.PathValue("shortUrlId")
 		// error handling for if the shortUrlId is not valid
-		if !isValidShortUrlId(shortUrl) {
+		if !isValidShortUrlId(shortUrlId) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(&redirectToLongUrlResponseBody{
-				Msg: fmt.Sprintf("received invalid url mapping id: %s, must be %d characters long and include only [a-zA-Z0-9]", shortUrl, ID_LENGTH),
+				Msg: fmt.Sprintf("received invalid url mapping id: %s, must be %d characters long and include only [a-zA-Z0-9]", shortUrlId, ID_LENGTH),
 				Status: http.StatusBadRequest,
 			})
 		}
+		// read the path mapping from the cache
+		longUrl, err := rdb.Get(r.Context(), shortUrlId).Result()
+		if err != nil {
+			if err != redis.Nil {
+				logger.Warn("error encountered when reading from redis cache", slog.Any("error", err))
+			}
+		} else {
+			http.Redirect(w, r, longUrl, http.StatusFound)
+		}
+		// on a cache miss, read the value from the database and write the value to the cache (write around caching)
 		// read the relevant record from the database
 		queries := db.New(conn)
 		var record db.UrlMapping
-		record, err := queries.SelectMapping(r.Context(), shortUrl)
+		record, err = queries.SelectMapping(r.Context(), shortUrlId)
 		if err == pgx.ErrNoRows {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusNotFound)
 			json.NewEncoder(w).Encode(&redirectToLongUrlResponseBody{
-				Msg: fmt.Sprintf("could not find a mapping for shortUrlId: %s", shortUrl),
+				Msg: fmt.Sprintf("could not find a mapping for shortUrlId: %s", shortUrlId),
 				Status: http.StatusNotFound,
 			})
 			return
@@ -142,7 +153,7 @@ func redirectToLongUrlHandlerFactory(conn *pgx.Conn) http.HandlerFunc {
 			logger.Error(
 				"database error encountered when querying for long url", 
 				"error", err, 
-				"shortUrl", shortUrl,
+				"shortUrl", shortUrlId,
 			)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -151,6 +162,13 @@ func redirectToLongUrlHandlerFactory(conn *pgx.Conn) http.HandlerFunc {
 				Status: http.StatusInternalServerError,
 			})
 			return
+		}
+		// write the retrieved long url to the cache
+		// we use write aside caching so the url is only written to the cache on the
+		// read path
+		_, err = rdb.Set(r.Context(), shortUrlId, record.LongUrl, 0).Result()
+		if err != nil {
+			logger.Warn(fmt.Sprintf("error encountered when writing long url to redis cache: %v", err))
 		}
 		// return a redirect to the long url associated with that short url
 		http.Redirect(w, r, record.LongUrl, http.StatusFound)
