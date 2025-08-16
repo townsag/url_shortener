@@ -1,4 +1,4 @@
-module townsag/url_shortener/src
+module townsag/url_shortener/api
 
 go 1.24.5
 

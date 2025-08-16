@@ -1,8 +1,8 @@
 FROM golang:1.24 AS builder
 WORKDIR /app
-COPY src/go.mod src/go.sum ./
+COPY api/go.mod api/go.sum ./
 RUN go mod download
-COPY src/ .
+COPY api/ .
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app/main
 
 FROM alpine/curl:latest AS runner

@@ -1,16 +1,16 @@
 package main
 
 import (
+	"context"
+	"log"
 	"net"
 	"net/http"
-	"log"
-	"context"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/redis/go-redis/v9"
 
-	"townsag/url_shortener/src/middleware"
-	"townsag/url_shortener/src/handlers"
+	"townsag/url_shortener/api/handlers"
+	"townsag/url_shortener/api/middleware"
 )
 
 func newServer(conn *pgx.Conn, rdb *redis.Client) http.Handler {
@@ -49,7 +49,7 @@ func main() {
 
 	srv := newServer(conn, rdb)
 	httpServer := &http.Server{
-		Addr: net.JoinHostPort("0.0.0.0", "8000"),
+		Addr:    net.JoinHostPort("0.0.0.0", "8000"),
 		Handler: srv,
 	}
 
