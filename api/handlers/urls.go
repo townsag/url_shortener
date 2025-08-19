@@ -124,6 +124,7 @@ func redirectToLongUrlHandlerFactory(conn *pgx.Conn, rdb *redis.Client) http.Han
 				Msg:    fmt.Sprintf("received invalid url mapping id: %s, must be %d characters long and include only [a-zA-Z0-9]", shortUrlId, ID_LENGTH),
 				Status: http.StatusBadRequest,
 			})
+			return
 		}
 		// read the path mapping from the cache
 		longUrl, err := rdb.Get(r.Context(), shortUrlId).Result()
