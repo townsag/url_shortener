@@ -34,7 +34,7 @@ func LoggingMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), loggerKey, boundLogger)
 		r = r.WithContext(ctx)
 		// log some metadata about the request
-		boundLogger.Debug("recieved request")
+		boundLogger.Debug("received request")
 		// add call the next handler
 		next.ServeHTTP(w, r)
 	})
