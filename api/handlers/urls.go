@@ -11,11 +11,11 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/redis/go-redis/v9"
 
-	"townsag/url_shortener/src/db"
-	"townsag/url_shortener/src/middleware"
+	"townsag/url_shortener/api/db"
+	"townsag/url_shortener/api/middleware"
 
 	// ^reference: https://docs.sqlc.dev/en/stable/tutorials/getting-started-postgresql.html
-	"townsag/url_shortener/src/util"
+	"townsag/url_shortener/api/util"
 )
 
 const ID_LENGTH int = 8
@@ -25,11 +25,10 @@ type createMappingRequestBody struct {
 }
 
 type createMappingResponseBody struct {
-	Msg string			`json:"message"`
-	Status int			`json:"status"`
-	ShortUrl *string	`json:"shortUrl,omitempty"`
+	Msg      string  `json:"message"`
+	Status   int     `json:"status"`
+	ShortUrl *string `json:"shortUrl,omitempty"`
 }
-
 
 func createMappingHandlerFactory(conn *pgx.Conn) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +51,7 @@ func createMappingHandlerFactory(conn *pgx.Conn) http.HandlerFunc {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				json.NewEncoder(w).Encode(&createMappingResponseBody{
-					Msg: http.StatusText(http.StatusInternalServerError),
+					Msg:    http.StatusText(http.StatusInternalServerError),
 					Status: http.StatusInternalServerError,
 				})
 				return
@@ -68,7 +67,7 @@ func createMappingHandlerFactory(conn *pgx.Conn) http.HandlerFunc {
 				continue
 			}
 			params := db.InsertMappingParams{
-				ID: tempResultId,
+				ID:      tempResultId,
 				LongUrl: body.LongUrl,
 			}
 			resultId, err = queries.InsertMapping(r.Context(), params)
@@ -85,13 +84,13 @@ func createMappingHandlerFactory(conn *pgx.Conn) http.HandlerFunc {
 		var response createMappingResponseBody
 		if resultId == "" {
 			response = createMappingResponseBody{
-				Msg: "failed to create short url because of internal server error",
+				Msg:    "failed to create short url because of internal server error",
 				Status: http.StatusInternalServerError,
 			}
 		} else {
 			response = createMappingResponseBody{
-				Msg: "successfully created short url",
-				Status: http.StatusOK,
+				Msg:      "successfully created short url",
+				Status:   http.StatusOK,
 				ShortUrl: &resultId,
 			}
 		}
@@ -103,8 +102,8 @@ func createMappingHandlerFactory(conn *pgx.Conn) http.HandlerFunc {
 }
 
 type redirectToLongUrlResponseBody struct {
-	Msg string	`json:"message"`
-	Status int	`json:"status"`
+	Msg    string `json:"message"`
+	Status int    `json:"status"`
 }
 
 func isValidShortUrlId(id string) bool {
@@ -113,7 +112,7 @@ func isValidShortUrlId(id string) bool {
 }
 
 func redirectToLongUrlHandlerFactory(conn *pgx.Conn, rdb *redis.Client) http.HandlerFunc {
-	return func (w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var logger *slog.Logger = middleware.GetLoggerFromContext(r.Context())
 		// parse the short url from the path
 		shortUrlId := r.PathValue("shortUrlId")
@@ -122,9 +121,10 @@ func redirectToLongUrlHandlerFactory(conn *pgx.Conn, rdb *redis.Client) http.Han
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(&redirectToLongUrlResponseBody{
-				Msg: fmt.Sprintf("received invalid url mapping id: %s, must be %d characters long and include only [a-zA-Z0-9]", shortUrlId, ID_LENGTH),
+				Msg:    fmt.Sprintf("received invalid url mapping id: %s, must be %d characters long and include only [a-zA-Z0-9]", shortUrlId, ID_LENGTH),
 				Status: http.StatusBadRequest,
 			})
+			return
 		}
 		// read the path mapping from the cache
 		longUrl, err := rdb.Get(r.Context(), shortUrlId).Result()
@@ -144,21 +144,21 @@ func redirectToLongUrlHandlerFactory(conn *pgx.Conn, rdb *redis.Client) http.Han
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusNotFound)
 			json.NewEncoder(w).Encode(&redirectToLongUrlResponseBody{
-				Msg: fmt.Sprintf("could not find a mapping for shortUrlId: %s", shortUrlId),
+				Msg:    fmt.Sprintf("could not find a mapping for shortUrlId: %s", shortUrlId),
 				Status: http.StatusNotFound,
 			})
 			return
 		}
 		if err != nil {
 			logger.Error(
-				"database error encountered when querying for long url", 
-				"error", err, 
+				"database error encountered when querying for long url",
+				"error", err,
 				"shortUrl", shortUrlId,
 			)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(&redirectToLongUrlResponseBody{
-				Msg: http.StatusText(http.StatusInternalServerError),
+				Msg:    http.StatusText(http.StatusInternalServerError),
 				Status: http.StatusInternalServerError,
 			})
 			return

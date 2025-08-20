@@ -39,7 +39,7 @@ func TestCreateMappingHappyPath(t *testing.T) {
 	body := []byte(`{
 		"longUrl": "https://google.com"
 	}`)
-	req, err := http.NewRequest("POST", "/mapping", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", "/api/mapping", bytes.NewBuffer(body))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,13 +83,13 @@ func TestCreateAndAccessMapping(t *testing.T) {
 	}
 	
 	testMux := http.NewServeMux()
-	testMux.HandleFunc("GET /{shortUrlId}", redirectToLongUrlHandlerFactory(conn, rdb))
-	testMux.HandleFunc("POST /mapping", createMappingHandlerFactory(conn))
+	testMux.HandleFunc("GET /api/{shortUrlId}", redirectToLongUrlHandlerFactory(conn, rdb))
+	testMux.HandleFunc("POST /api/mapping", createMappingHandlerFactory(conn))
 
 	// for this test, assume that the create mapping call succeeds because failures of the
 	// create mapping path will be caught by the other test
 	body := []byte(`{"longUrl": "https://google.com"}`)
-	req, err := http.NewRequest("POST", "/mapping", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", "/api/mapping", bytes.NewBuffer(body))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,7 +115,7 @@ func TestCreateAndAccessMapping(t *testing.T) {
 	}
 
 	// call the redirect handler with the returned short url
-	req, err = http.NewRequest("GET", fmt.Sprintf("/%s", *responseBody.ShortUrl), nil)
+	req, err = http.NewRequest("GET", fmt.Sprintf("/api/%s", *responseBody.ShortUrl), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -169,9 +169,9 @@ func TestAccessUnboundShortUrl(t *testing.T) {
 	}
 
 	testMux := http.NewServeMux()
-	testMux.HandleFunc("GET /{shortUrlId}", redirectToLongUrlHandlerFactory(conn, rdb))
+	testMux.HandleFunc("GET /api/{shortUrlId}", redirectToLongUrlHandlerFactory(conn, rdb))
 
-	req, err := http.NewRequest("GET", "/12345678", nil)
+	req, err := http.NewRequest("GET", "/api/12345678", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -202,7 +202,7 @@ func TestAccessInvalidShortUrl(t *testing.T) {
 
 	handler := redirectToLongUrlHandlerFactory(conn, rdb)
 
-	req, err := http.NewRequest("GET", "/asdf", nil)
+	req, err := http.NewRequest("GET", "/api/asdf", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

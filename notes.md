@@ -31,7 +31,14 @@ todo:
     - [x] add health check
     - [x] add docker compose configuration
     - [ ] add frontend
-    - [ ] add caching
+        - [x] add basic skeleton framework ui directory
+            - understand sveltekit project structure
+            - understand how to embed spa / static site files in my golang application
+            - (handle refresh case: https://bindplane.com/blog/embed-react-in-golang)
+        - [ ] add functionality
+            - make short urls
+        - [ ] add basic styling
+    - [x] add caching
     - [ ] add horizontal scaling
     - [ ] add load balancing
     - [ ] add metrics
@@ -46,5 +53,28 @@ todo:
             - tla+ or P
         - property testing
             - testing/quick
+            - https://pkg.go.dev/testing/quick
         - code coverage guided property based testing
             - not yet implemented in golang
+
+## Resources:
+- net/http and the structure of golang webserver applications
+    - https://www.alexedwards.net/blog/an-introduction-to-handlers-and-servemuxes-in-go
+    - https://www.alexedwards.net/blog/the-fat-service-pattern
+        - TODO: refactor to handler - service - repository pattern because fat-service makes for verbose test that do not follow separation of concerns principle 
+- context package conceptual
+    - https://go.dev/blog/context
+- url shortener system design
+    - https://www.youtube.com/watch?v=xFeWVugaouk
+- back of the napkin estimation
+    - https://static.googleusercontent.com/media/sre.google/en//static/pdf/rule-of-thumb-latency-numbers-letter.pdf
+- go programming patterns
+    - https://go.dev/doc/effective_go
+    - TODO: read more
+- json wrangling
+    - https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body
+- testing postgres applications
+    - https://testcontainers.com/guides/getting-started-with-testcontainers-for-go/#_getting_started
+    - https://golang.testcontainers.org/modules/postgres/
+- structured logging:
+    - https://go.dev/blog/slog

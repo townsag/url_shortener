@@ -1,24 +1,30 @@
 package main
 
 import (
+	"context"
+	"embed"
+	"io/fs"
+	"log"
 	"net"
 	"net/http"
-	"log"
-	"context"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/redis/go-redis/v9"
 
-	"townsag/url_shortener/src/middleware"
-	"townsag/url_shortener/src/handlers"
+	"townsag/url_shortener/api/handlers"
+	"townsag/url_shortener/api/middleware"
 )
 
-func newServer(conn *pgx.Conn, rdb *redis.Client) http.Handler {
+//go:embed all:build
+var files embed.FS
+
+func newServer(conn *pgx.Conn, rdb *redis.Client, filesystem http.FileSystem) http.Handler {
 	mux := http.NewServeMux()
 	handlers.AddRoutes(
 		mux,
 		conn,
 		rdb,
+		filesystem,
 	)
 
 	root_logger := middleware.BuildLogger()
@@ -33,6 +39,7 @@ func newServer(conn *pgx.Conn, rdb *redis.Client) http.Handler {
 
 func main() {
 	ctx := context.Background()
+	// create a connection to the postgres database server
 	var postgresConfig *dbConfig = getConfiguration()
 	conn, err := createDBConnection(ctx, postgresConfig)
 	if err != nil {
@@ -40,6 +47,7 @@ func main() {
 	}
 	defer conn.Close(context.Background())
 
+	// create a connection to the redis server
 	var redisConfig *redisConfig = getRedisConfiguration()
 	rdb, err := createRedisConnection(ctx, redisConfig)
 	if err != nil {
@@ -47,9 +55,16 @@ func main() {
 	}
 	defer rdb.Close()
 
-	srv := newServer(conn, rdb)
+	// create a filesystem object
+	fsys, err := fs.Sub(files, "build")
+	if err != nil {
+		log.Fatalf("unable to access the filesystem: %s", err)
+	}
+	filesystem := http.FS(fsys)
+
+	srv := newServer(conn, rdb, filesystem)
 	httpServer := &http.Server{
-		Addr: net.JoinHostPort("0.0.0.0", "8000"),
+		Addr:    net.JoinHostPort("0.0.0.0", "8000"),
 		Handler: srv,
 	}
 

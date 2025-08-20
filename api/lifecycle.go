@@ -8,22 +8,23 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/redis/go-redis/v9"
 
-	"townsag/url_shortener/src/util"
+	"townsag/url_shortener/api/util"
 )
 
 type dbConfig struct {
-	host string
-	port int
-	dbName string
-	user string
+	host     string
+	port     int
+	dbName   string
+	user     string
 	password string
 }
 
 // TODO: measure for what sizes of struct does passing the struct by reference become
-//		 faster than passing the struct by value
+//
+//	faster than passing the struct by value
 func getConfiguration() *dbConfig {
 	var portEnv string = util.GetEnvWithDefault("POSTGRES_PORT", "5432")
-	// declaring port inside of the if condition expression would create a 
+	// declaring port inside of the if condition expression would create a
 	// new version of port scoped to the if statement. This version of port
 	// would shadow but not replace the function scoped version of port
 	port, err := strconv.Atoi(portEnv)
@@ -32,10 +33,10 @@ func getConfiguration() *dbConfig {
 	}
 
 	config := dbConfig{
-		host: util.GetEnvWithDefault("POSTGRES_HOST", "localhost"),
-		port: port,
-		dbName: util.GetEnvWithDefault("POSTGRES_DB", "postgres"),
-		user: util.GetEnvWithDefault("POSTGRES_USER", "admin"),
+		host:     util.GetEnvWithDefault("POSTGRES_HOST", "localhost"),
+		port:     port,
+		dbName:   util.GetEnvWithDefault("POSTGRES_DB", "postgres"),
+		user:     util.GetEnvWithDefault("POSTGRES_USER", "admin"),
 		password: util.GetEnvWithDefault("POSTGRES_PASSWORD", "password"),
 	}
 	return &config
