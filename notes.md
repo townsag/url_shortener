@@ -30,21 +30,21 @@ todo:
     - [x] add database support to those two routes
     - [x] add health check
     - [x] add docker compose configuration
-    - [ ] add frontend
+    - [x] add frontend
         - [x] add basic skeleton framework ui directory
             - understand sveltekit project structure
             - understand how to embed spa / static site files in my golang application
             - (handle refresh case: https://bindplane.com/blog/embed-react-in-golang)
-        - [ ] add functionality
+        - [x] add functionality
             - make short urls
-        - [ ] add basic styling
+        - [x] add basic styling
     - [x] add caching
-    - [ ] add horizontal scaling
-    - [ ] add load balancing
     - [ ] add metrics
-    - [ ] add log aggregation
     - [ ] add tracing with opentelemetry
     - [ ] add admin dashboard
+    - [ ] add horizontal scaling
+    - [ ] add load balancing
+    - [ ] add log aggregation
         - analytics?
     - [ ] add auth?
     - testing types

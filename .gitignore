@@ -2,3 +2,4 @@ api/url_shortener
 syntax.go
 coverage.out
 *.env
+my-app/

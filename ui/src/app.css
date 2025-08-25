@@ -1,1 +1,7 @@
+@import '@fontsource/abril-fatface';
 @import 'tailwindcss';
+
+@theme {
+    --color-jumbo-orange: #f06a2e;
+    --font-abril: "abril-fatface";
+}

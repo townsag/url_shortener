@@ -81,6 +81,7 @@ func createMappingHandlerFactory(conn *pgx.Conn) http.HandlerFunc {
 			}
 			break
 		}
+		// TODO: this should return a 500 error instead of a 200 error
 		var response createMappingResponseBody
 		if resultId == "" {
 			response = createMappingResponseBody{
