@@ -10,6 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/redis/go-redis/v9"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"townsag/url_shortener/api/handlers"
 	"townsag/url_shortener/api/middleware"
@@ -19,12 +20,16 @@ import (
 var files embed.FS
 
 func newServer(conn *pgx.Conn, rdb *redis.Client, filesystem http.FileSystem) http.Handler {
+	var registry *prometheus.Registry = prometheus.NewRegistry()
+	metrics := middleware.NewMetrics(registry)
+
 	mux := http.NewServeMux()
 	handlers.AddRoutes(
 		mux,
 		conn,
 		rdb,
 		filesystem,
+		registry,
 	)
 
 	root_logger := middleware.BuildLogger()
@@ -34,6 +39,7 @@ func newServer(conn *pgx.Conn, rdb *redis.Client, filesystem http.FileSystem) ht
 	// will execute and then the logging middleware
 	handler = middleware.LoggingMiddleware(root_logger, handler)
 	handler = middleware.RequestIdMiddleware(handler)
+	handler = middleware.MetricsMiddleware(metrics, handler)
 	return handler
 }
 
