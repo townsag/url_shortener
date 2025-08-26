@@ -19,3 +19,10 @@ scrape_configs:
   static_configs:
   - targets:
     - localhost:9090
+- job_name: url-shortener
+  honor_timestamps: true
+  metrics_path: /api/metrics
+  scheme: http
+  static_configs:
+  - targets:
+    - url-shortener:8000

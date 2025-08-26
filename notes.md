@@ -40,7 +40,11 @@ todo:
         - [x] add basic styling
     - [x] add caching
     - [ ] add metrics
-    - [ ] add tracing with opentelemetry
+        - prometheus + grafana
+    - [ ] add tracing
+        - opentelemetry + Jaeger or Grafana Tempo
+    - [ ] add log aggregation
+        - slog + Grafana Loki
     - [ ] add admin dashboard
     - [ ] add horizontal scaling
     - [ ] add load balancing
