@@ -2,6 +2,7 @@
     "cSpell.words": [
         "fsys",
         "healthcheck",
+        "promhttp",
         "tcredis",
         "testcontainer",
         "testcontainers"
