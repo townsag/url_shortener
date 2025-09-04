@@ -10,6 +10,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/codes"
+	// ^http://github.com/open-telemetry/opentelemetry-demo/blob/main/src/product-catalog/main.go#L37
 
 	"townsag/url_shortener/api/db"
 	"townsag/url_shortener/api/middleware"
@@ -33,10 +36,13 @@ type createMappingResponseBody struct {
 func createMappingHandlerFactory(conn *pgx.Conn) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var logger *slog.Logger = middleware.GetLoggerFromContext(r.Context())
+		parentSpan := trace.SpanFromContext(r.Context())
 		// parse the http post request body
 		var body createMappingRequestBody
 		err := util.DecodeJSONBody(w, r, &body)
 		if err != nil {
+			parentSpan.SetStatus(codes.Error, "decoding of the request body failed")
+			parentSpan.RecordError(err)
 			var mr *util.MalformedRequest
 			if errors.As(err, &mr) {
 				logger.Warn("client error encountered when validating request body", "error", err)
@@ -58,37 +64,50 @@ func createMappingHandlerFactory(conn *pgx.Conn) http.HandlerFunc {
 			}
 		}
 		// write the long url to the database with retry
+		ctx, writeLongUrlSpan := tracer.Start(r.Context(), "InsertMapping")
 		queries := db.New(conn)
 		var resultId string
 		for i := range 3 {
+			ctx, attemptSpan := tracer.Start(ctx, fmt.Sprintf("attempt-%d", i))
 			tempResultId, err := util.RandomBase62(ID_LENGTH)
 			if err != nil {
 				logger.Error("failed to generate a short url", "error", err)
+				attemptSpan.SetStatus(codes.Error, "creating a random base 62 id failed")
+				attemptSpan.RecordError(err)
+				attemptSpan.End()
 				continue
 			}
 			params := db.InsertMappingParams{
 				ID:      tempResultId,
 				LongUrl: body.LongUrl,
 			}
-			resultId, err = queries.InsertMapping(r.Context(), params)
+			resultId, err = queries.InsertMapping(ctx, params)
 			if err != nil {
 				logger.Error("database error encountered when writing new long url", "error", err)
+				attemptSpan.SetStatus(codes.Error, "inserting the mapping into the database failed")
+				attemptSpan.RecordError(err)
+				attemptSpan.End()
 				continue
 			}
 			if resultId == "" {
 				logger.Warn("tried to insert duplicate short url", "attempt", i)
+				attemptSpan.End()
 				continue
 			}
+			attemptSpan.End()
 			break
 		}
+		writeLongUrlSpan.End()
 		// TODO: this should return a 500 error instead of a 200 error
 		var response createMappingResponseBody
 		if resultId == "" {
+			w.WriteHeader(http.StatusInternalServerError)
 			response = createMappingResponseBody{
 				Msg:    "failed to create short url because of internal server error",
 				Status: http.StatusInternalServerError,
 			}
 		} else {
+			w.WriteHeader(http.StatusOK)
 			response = createMappingResponseBody{
 				Msg:      "successfully created short url",
 				Status:   http.StatusOK,
