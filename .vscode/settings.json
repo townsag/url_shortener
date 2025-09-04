@@ -3,6 +3,7 @@
         "fsys",
         "healthcheck",
         "otelhttp",
+        "otlphttp",
         "otlpmetricgrpc",
         "otlptracegrpc",
         "promhttp",
