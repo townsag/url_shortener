@@ -40,9 +40,19 @@ todo:
         - [x] add basic styling
     - [x] add caching
     - [ ] add metrics
-        - prometheus + grafana
+        - [x] record metrics with prometheus
+        - migrate to using otel for metrics instead of native prometheus
+        - push or pull method?
+        - deeper understand labels / tags of metrics (request type or path)
+        - write some simple queries
+            - https://medium.com/observability-101/5-essential-prometheus-metrics-every-developer-should-monitor-c201ed920037
+        - [ ] visualize metrics with grafana
     - [ ] add tracing
-        - opentelemetry + Jaeger or Grafana Tempo
+        - opentelemetry + Grafana Tempo
+        - minimal docker compose example:
+            - https://github.com/grafana/tempo/tree/main/example/docker-compose/otel-collector
+        - emphasize the integration between grafana for metrics and grafana tempo
+            - [ ] use exemplars to correlate traces and metrics
     - [ ] add log aggregation
         - slog + Grafana Loki
     - [ ] add admin dashboard
