@@ -24,3 +24,10 @@
     ```
 
 ## Running Benchmarks
+
+## Running the Load Test:
+- the locust load test can be run using this command
+```bash
+cd ../load-test
+locust
+```
