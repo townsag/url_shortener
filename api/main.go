@@ -9,7 +9,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
@@ -20,11 +20,11 @@ import (
 //go:embed all:build
 var files embed.FS
 
-func newServer(conn *pgx.Conn, rdb *redis.Client, filesystem http.FileSystem) http.Handler {
+func newServer(pool *pgxpool.Pool, rdb *redis.Client, filesystem http.FileSystem) http.Handler {
 	mux := http.NewServeMux()
 	handlers.AddRoutes(
 		mux,
-		conn,
+		pool,
 		rdb,
 		filesystem,
 	)
@@ -58,12 +58,16 @@ func main() {
 	// TODO: do something with that error^
 
 	// create a connection to the postgres database server
-	var postgresConfig *dbConfig = getConfiguration()
-	conn, err := createDBConnection(ctx, postgresConfig)
+	var postgresConfig *pgxpool.Config 
+	postgresConfig, err = getConfiguration()
 	if err != nil {
-		log.Fatalf("failed to create a database connection: %s", err)
+		log.Fatalf("error parsing the database config: %s", err)
 	}
-	defer conn.Close(context.Background())
+	pool, err := createDBConnectionPool(ctx, postgresConfig)
+	if err != nil {
+		log.Fatalf("failed to create a database connection pool: %s", err)
+	}
+	defer pool.Close()
 
 	// create a connection to the redis server
 	var redisConfig *redisConfig = getRedisConfiguration()
@@ -81,7 +85,7 @@ func main() {
 	filesystem := http.FS(fsys)
 
 	// build the server with its routes
-	srv := newServer(conn, rdb, filesystem)
+	srv := newServer(pool, rdb, filesystem)
 	httpServer := &http.Server{
 		Addr:    net.JoinHostPort("0.0.0.0", "8000"),
 		Handler: srv,

@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 
 func TestCreateMappingHappyPath(t *testing.T) {
 	// get a connection to the postgres test container
-	conn, err := setupPostgresContainer()
+	pool, err := setupPostgresContainer()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func TestCreateMappingHappyPath(t *testing.T) {
 	// 	t.Fatalf("failed to restore the postgres database to the empty checkpoint %s", err)
 	// }
 	// create a create mapping handler
-	handler := createMappingHandlerFactory(conn)
+	handler := createMappingHandlerFactory(pool)
 	// create a request for the create mapping route
 	body := []byte(`{
 		"longUrl": "https://google.com"
@@ -72,7 +72,7 @@ func TestCreateMappingHappyPath(t *testing.T) {
 }
 
 func TestCreateAndAccessMapping(t *testing.T) {
-	conn, err := setupPostgresContainer()
+	pool, err := setupPostgresContainer()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,8 +83,8 @@ func TestCreateAndAccessMapping(t *testing.T) {
 	}
 	
 	testMux := http.NewServeMux()
-	testMux.HandleFunc("GET /api/{shortUrlId}", redirectToLongUrlHandlerFactory(conn, rdb))
-	testMux.HandleFunc("POST /api/mapping", createMappingHandlerFactory(conn))
+	testMux.HandleFunc("GET /api/{shortUrlId}", redirectToLongUrlHandlerFactory(pool, rdb))
+	testMux.HandleFunc("POST /api/mapping", createMappingHandlerFactory(pool))
 
 	// for this test, assume that the create mapping call succeeds because failures of the
 	// create mapping path will be caught by the other test
@@ -158,7 +158,7 @@ func TestCreateAndAccessMapping(t *testing.T) {
 }
 
 func TestAccessUnboundShortUrl(t *testing.T) {
-	conn, err := setupPostgresContainer()
+	pool, err := setupPostgresContainer()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -169,7 +169,7 @@ func TestAccessUnboundShortUrl(t *testing.T) {
 	}
 
 	testMux := http.NewServeMux()
-	testMux.HandleFunc("GET /api/{shortUrlId}", redirectToLongUrlHandlerFactory(conn, rdb))
+	testMux.HandleFunc("GET /api/{shortUrlId}", redirectToLongUrlHandlerFactory(pool, rdb))
 
 	req, err := http.NewRequest("GET", "/api/12345678", nil)
 	if err != nil {
@@ -190,7 +190,7 @@ func TestCreateInvalidMapping(t *testing.T) {
 }
 
 func TestAccessInvalidShortUrl(t *testing.T) {
-	conn, err := setupPostgresContainer()
+	pool, err := setupPostgresContainer()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -200,7 +200,7 @@ func TestAccessInvalidShortUrl(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	handler := redirectToLongUrlHandlerFactory(conn, rdb)
+	handler := redirectToLongUrlHandlerFactory(pool, rdb)
 
 	req, err := http.NewRequest("GET", "/api/asdf", nil)
 	if err != nil {

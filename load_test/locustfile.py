@@ -22,4 +22,9 @@ class SimpleUser(HttpUser):
         short_url_id = create_resp.json()["shortUrl"]
         access_response: Response = self.client.get(
             url=f"/api/{short_url_id}",
+            name="/[shortUrl]",
+            allow_redirects=False,
+            # ^this was interesting to debug
+            # without disallowing redirects we were sending 20,000 rpm to google.com 
+            # and being rate limited by google
         )

@@ -6,6 +6,7 @@
         "otlphttp",
         "otlpmetricgrpc",
         "otlptracegrpc",
+        "pgxpool",
         "promhttp",
         "tcredis",
         "testcontainer",
