@@ -47,6 +47,12 @@ todo:
         - write some simple queries
             - https://medium.com/observability-101/5-essential-prometheus-metrics-every-developer-should-monitor-c201ed920037
         - [ ] visualize metrics with grafana
+        - metrics wish list:
+            - [ ] machine info
+            - [ ] number of active database connections
+            - [ ] avg latency per database operation
+            - [ ] avg latency per cache operation
+            - [ ] rate of cache misses
     - [x] add tracing
         - opentelemetry + Grafana Tempo
         - minimal docker compose example:

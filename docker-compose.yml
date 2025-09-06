@@ -117,7 +117,8 @@ services:
   grafana:
     image: grafana/grafana:11.0.0
     volumes:
-      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./grafana/datasources/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
