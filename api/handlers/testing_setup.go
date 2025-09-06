@@ -10,12 +10,11 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	tcredis "github.com/testcontainers/testcontainers-go/modules/redis"
-
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var (
-	conn *pgx.Conn
+	testPool *pgxpool.Pool
 	pgContainer *postgres.PostgresContainer
 	setupOncePG sync.Once
 	cleanupOncePG sync.Once
@@ -36,7 +35,7 @@ TODO:
 	- https://golang.testcontainers.org/modules/postgres/#using-snapshots
 */
 
-func setupPostgresContainer() (*pgx.Conn, error) {
+func setupPostgresContainer() (*pgxpool.Pool, error) {
 	var err error = nil
 	setupOncePG.Do(
 		func() {
@@ -63,7 +62,7 @@ func setupPostgresContainer() (*pgx.Conn, error) {
 				err = fmt.Errorf("unable to connect to postgres container %w", err)
 				return
 			}
-			conn, err = pgx.Connect(ctx, dbURL)
+			testPool, err = pgxpool.New(ctx, dbURL)
 			if err != nil {
 				err = fmt.Errorf("unable to connect to postgres container: %w", err)
 				return
@@ -78,16 +77,15 @@ func setupPostgresContainer() (*pgx.Conn, error) {
 		},
 	)
 
-	return conn, err
+	return testPool, err
 }
 
 func cleanupPostgresContainer() error {
 	var err error = nil
 	cleanupOncePG.Do(
 		func() {
-			ctx := context.Background()
-			if conn != nil{
-				_ = conn.Close(ctx)
+			if testPool != nil{
+				testPool.Close()
 			}
 			if pgContainer != nil {
 				fmt.Println("closing postgres testcontainer")
