@@ -5,24 +5,16 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
 	"townsag/url_shortener/api/util"
 )
 
-type dbConfig struct {
-	host     string
-	port     int
-	dbName   string
-	user     string
-	password string
-}
 
 // TODO: measure for what sizes of struct does passing the struct by reference become
-//
-//	faster than passing the struct by value
-func getConfiguration() *dbConfig {
+//		 faster than passing the struct by value
+func getConfiguration() (*pgxpool.Config, error) {
 	var portEnv string = util.GetEnvWithDefault("POSTGRES_PORT", "5432")
 	// declaring port inside of the if condition expression would create a
 	// new version of port scoped to the if statement. This version of port
@@ -32,34 +24,28 @@ func getConfiguration() *dbConfig {
 		port = 5432
 	}
 
-	config := dbConfig{
-		host:     util.GetEnvWithDefault("POSTGRES_HOST", "localhost"),
-		port:     port,
-		dbName:   util.GetEnvWithDefault("POSTGRES_DB", "postgres"),
-		user:     util.GetEnvWithDefault("POSTGRES_USER", "admin"),
-		password: util.GetEnvWithDefault("POSTGRES_PASSWORD", "password"),
-	}
-	return &config
+	host := util.GetEnvWithDefault("POSTGRES_HOST", "localhost")
+	dbName := util.GetEnvWithDefault("POSTGRES_DB", "postgres")
+	user := util.GetEnvWithDefault("POSTGRES_USER", "admin")
+	password := util.GetEnvWithDefault("POSTGRES_PASSWORD", "password")
+	poolMaxCons := util.GetEnvWithDefault("POOL_MAX_CONS", "25")
+
+	return pgxpool.ParseConfig(fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s pool_max_cons=%s",
+		host, port, user, password, dbName, poolMaxCons,
+	))
 }
 
-func createDBConnection(ctx context.Context, config *dbConfig) (*pgx.Conn, error) {
-	conn, err := pgx.Connect(
-		ctx,
-		fmt.Sprintf(
-			"host=%s port=%d user=%s password=%s dbname=%s",
-			config.host, config.port, config.user, config.password, config.dbName,
-		),
-	)
+func createDBConnectionPool(ctx context.Context, config *pgxpool.Config) (*pgxpool.Pool, error) {
+	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open connection to database: %w", err)
+		return nil, fmt.Errorf("failed to create a database connection pool: %w", err)
 	}
-
-	if err := conn.Ping(ctx); err != nil {
-		conn.Close(ctx)
-		return nil, fmt.Errorf("failed to ping database after creating connection: %w", err)
+	if err := pool.Ping(ctx); err != nil {
+		pool.Close()
+		return nil, fmt.Errorf("failed to ping the new connection pool: %w", err)
 	}
-
-	return conn, nil
+	return pool, nil
 }
 
 type redisConfig struct {

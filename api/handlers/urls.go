@@ -9,9 +9,11 @@ import (
 	"regexp"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
-	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
 	// ^http://github.com/open-telemetry/opentelemetry-demo/blob/main/src/product-catalog/main.go#L37
 
 	"townsag/url_shortener/api/db"
@@ -33,7 +35,7 @@ type createMappingResponseBody struct {
 	ShortUrl *string `json:"shortUrl,omitempty"`
 }
 
-func createMappingHandlerFactory(conn *pgx.Conn) http.HandlerFunc {
+func createMappingHandlerFactory(pool *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var logger *slog.Logger = middleware.GetLoggerFromContext(r.Context())
 		parentSpan := trace.SpanFromContext(r.Context())
@@ -65,6 +67,22 @@ func createMappingHandlerFactory(conn *pgx.Conn) http.HandlerFunc {
 		}
 		// write the long url to the database with retry
 		ctx, writeLongUrlSpan := tracer.Start(r.Context(), "InsertMapping")
+		var conn *pgxpool.Conn 
+		conn, err = pool.Acquire(r.Context())
+		if err != nil {
+			logger.Error(
+				"unable to get a connection from the pool in the create mapping handler",
+				"error", err,
+			)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			json.NewEncoder(w).Encode(&redirectToLongUrlResponseBody{
+				Msg:    http.StatusText(http.StatusServiceUnavailable),
+				Status: http.StatusServiceUnavailable,
+			})
+			return
+		}
+		defer conn.Release()
 		queries := db.New(conn)
 		var resultId string
 		for i := range 3 {
@@ -131,7 +149,7 @@ func isValidShortUrlId(id string) bool {
 	return r.MatchString(id)
 }
 
-func redirectToLongUrlHandlerFactory(conn *pgx.Conn, rdb *redis.Client) http.HandlerFunc {
+func redirectToLongUrlHandlerFactory(pool *pgxpool.Pool, rdb *redis.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var logger *slog.Logger = middleware.GetLoggerFromContext(r.Context())
 		// parse the short url from the path
@@ -157,6 +175,22 @@ func redirectToLongUrlHandlerFactory(conn *pgx.Conn, rdb *redis.Client) http.Han
 		}
 		// on a cache miss, read the value from the database and write the value to the cache (write around caching)
 		// read the relevant record from the database
+		var conn *pgxpool.Conn 
+		conn, err = pool.Acquire(r.Context())
+		if err != nil {
+			logger.Error(
+				"unable to get a connection from the pool in the redirect handler",
+				"error", err,
+			)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			json.NewEncoder(w).Encode(&redirectToLongUrlResponseBody{
+				Msg:    http.StatusText(http.StatusServiceUnavailable),
+				Status: http.StatusServiceUnavailable,
+			})
+			return
+		}
+		defer conn.Release()
 		queries := db.New(conn)
 		var record db.UrlMapping
 		record, err = queries.SelectMapping(r.Context(), shortUrlId)
