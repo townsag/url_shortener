@@ -31,7 +31,7 @@ func getConfiguration() (*pgxpool.Config, error) {
 	poolMaxCons := util.GetEnvWithDefault("POOL_MAX_CONS", "25")
 
 	return pgxpool.ParseConfig(fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s pool_max_cons=%s",
+		"host=%s port=%d user=%s password=%s dbname=%s pool_max_conns=%s",
 		host, port, user, password, dbName, poolMaxCons,
 	))
 }

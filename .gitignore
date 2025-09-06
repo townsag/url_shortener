@@ -4,3 +4,4 @@ coverage.out
 *.env
 my-app/
 tempo-data/*
+*/__pycache__/*
