@@ -42,23 +42,39 @@ todo:
     - [ ] add metrics
         - [x] record metrics with prometheus
         - [x] migrate to using otel for metrics instead of native prometheus
+        - minimal docker compose example:
+            - https://github.com/grafana/tempo/tree/main/example/docker-compose/otel-collector
         - push or pull method?
         - deeper understand labels / tags of metrics (request type or path)
         - write some simple queries
             - https://medium.com/observability-101/5-essential-prometheus-metrics-every-developer-should-monitor-c201ed920037
-        - [ ] visualize metrics with grafana
+        - [x] visualize metrics with grafana
         - metrics wish list:
             - [ ] machine info
+                - cpu usage
+                - memory usage
             - [ ] number of active database connections
             - [ ] avg latency per database operation
+                - this could be a histogram with tags
             - [ ] avg latency per cache operation
+                - this could be a histogram with tags
             - [ ] rate of cache misses
+                - this could be a count with tags
+        - manual instrumentation docs:
+            - https://opentelemetry.io/docs/languages/go/instrumentation/
     - [x] add tracing
         - opentelemetry + Grafana Tempo
         - minimal docker compose example:
             - https://github.com/grafana/tempo/tree/main/example/docker-compose/otel-collector
+        - slightly more complex demo:
+            - https://github.com/open-telemetry/opentelemetry-demo/blob/main/docker-compose.yml
         - emphasize the integration between grafana for metrics and grafana tempo
-            - [ ] use exemplars to correlate traces and metrics
+            - [x] use exemplars to correlate traces and metrics
+                - conceptual resource: https://opentelemetry.io/docs/specs/otel/metrics/sdk/#exemplar
+                - when metrics are being recorded we also record the active span/trace so that we can correlate the two
+                - path through the application
+                    - otel sdk -> otel collector -> prometheus -> (queried by) grafana
+                - example documentation: https://pkg.go.dev/go.opentelemetry.io/otel/sdk/metric#example-NewView-Exemplarreservoirproviderselector
     - [ ] add log aggregation
         - slog + Grafana Loki
     - [ ] add admin dashboard
