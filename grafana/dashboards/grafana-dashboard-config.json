@@ -18,7 +18,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 1,
   "links": [],
   "panels": [
     {
@@ -108,6 +107,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
+          "exemplar": true,
           "expr": "histogram_quantile(0.99, rate(http_server_request_duration_seconds_bucket[10m]))",
           "fullMetaSearch": false,
           "hide": false,
@@ -209,7 +209,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "exemplar": false,
+          "exemplar": true,
           "expr": "rate(http_server_request_duration_seconds_count[1m])",
           "fullMetaSearch": false,
           "hide": false,
@@ -226,6 +226,7 @@
       "type": "timeseries"
     }
   ],
+  "refresh": "5s",
   "schemaVersion": 39,
   "tags": [],
   "templating": {
@@ -240,6 +241,6 @@
   "timezone": "browser",
   "title": "First Dashboard",
   "uid": "fex8qax25vj7kc",
-  "version": 3,
+  "version": 1,
   "weekStart": ""
 }

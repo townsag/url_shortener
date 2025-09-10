@@ -5,6 +5,7 @@ receivers:
 
 exporters:
   debug:
+  #   verbosity: detailed
   otlp:
     endpoint: tempo:4317
     tls:
@@ -13,6 +14,8 @@ exporters:
     endpoint: http://prometheus:9090/api/v1/otlp
     tls:
       insecure: true
+  # prometheusremotewrite:
+  #   endpoint: "http://prometheus:9090/api/v1/write"
 
 service:
   pipelines:
@@ -22,3 +25,4 @@ service:
     metrics:
       receivers: [otlp]
       exporters: [debug,otlphttp/prometheus]
+      # exporters: [debug,prometheusremotewrite]
